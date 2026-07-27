@@ -1,26 +1,131 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #05060a;
+  --surface: #0b0e16;
+  --surface-2: #11151f;
+  --foreground: #e8ecf5;
+  --muted: #9aa5b8;
+  --border: rgba(255, 255, 255, 0.08);
+  --accent: #7c8cff;
+  --accent-2: #22d3ee;
+  --accent-3: #f472b6;
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --danger: #fb7185;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent2: var(--accent-2);
+  --color-accent3: var(--accent-3);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  overflow-x: hidden;
 }
+
+/* Ambient animated background */
+.atlas-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(60rem 60rem at 12% -10%, rgba(124, 140, 255, 0.16), transparent 60%),
+    radial-gradient(50rem 50rem at 100% 0%, rgba(34, 211, 238, 0.12), transparent 55%),
+    radial-gradient(45rem 45rem at 50% 120%, rgba(244, 114, 182, 0.10), transparent 55%);
+  animation: drift 22s ease-in-out infinite alternate;
+}
+
+.atlas-grid {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse at 50% 30%, black, transparent 80%);
+}
+
+@keyframes drift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(0, -3%, 0) scale(1.06); }
+}
+
+/* Glassmorphism */
+.glass {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid var(--border);
+}
+
+.glass-strong {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid var(--border);
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, #a5b4fc, #22d3ee 55%, #f472b6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.glow {
+  box-shadow: 0 0 0 1px rgba(124, 140, 255, 0.25), 0 8px 40px -12px rgba(124, 140, 255, 0.5);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* React Flow overrides */
+.react-flow__attribution { display: none; }
+.react-flow__edge-path { stroke-width: 2; }
+.flow-dash { stroke-dasharray: 6 6; animation: dash 0.6s linear infinite; }
+@keyframes dash { to { stroke-dashoffset: -12; } }
+
+.node-card {
+  border-radius: 14px;
+  padding: 10px 14px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.node-card:hover { transform: translateY(-2px); }
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(124, 140, 255, 0.5); }
+  70% { box-shadow: 0 0 0 12px rgba(124, 140, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(124, 140, 255, 0); }
+}
+.pulse { animation: pulse-ring 1.8s infinite; }
