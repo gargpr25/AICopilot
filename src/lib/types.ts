@@ -101,6 +101,11 @@ export interface Architecture {
   steps: { label: string; slug?: string; detail: string }[];
   highlights: string[];
   stack: string[];
+  overview?: string;
+  keyDecisions?: string[];
+  tradeoffs?: string[];
+  scaleNotes?: string;
+  lessonsLearned?: string[];
 }
 
 export interface ComparisonTable {

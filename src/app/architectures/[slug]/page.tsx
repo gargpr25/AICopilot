@@ -62,6 +62,41 @@ export default async function ArchitecturePage({ params }: { params: Promise<{ s
         <Bullets items={a.highlights} tone="ok" />
       </Card>
 
+      {a.overview && (
+        <Card>
+          <h2 className="text-base font-bold mb-3">Overview</h2>
+          <p className="text-sm text-muted leading-relaxed">{a.overview}</p>
+        </Card>
+      )}
+
+      {a.keyDecisions && a.keyDecisions.length > 0 && (
+        <Card>
+          <h2 className="text-base font-bold mb-3">Key architectural decisions</h2>
+          <Bullets items={a.keyDecisions} tone="ok" />
+        </Card>
+      )}
+
+      {a.tradeoffs && a.tradeoffs.length > 0 && (
+        <Card>
+          <h2 className="text-base font-bold mb-3">Trade-offs</h2>
+          <Bullets items={a.tradeoffs} tone="danger" />
+        </Card>
+      )}
+
+      {a.scaleNotes && (
+        <Card>
+          <h2 className="text-base font-bold mb-3">At scale</h2>
+          <p className="text-sm text-muted leading-relaxed">{a.scaleNotes}</p>
+        </Card>
+      )}
+
+      {a.lessonsLearned && a.lessonsLearned.length > 0 && (
+        <Card>
+          <h2 className="text-base font-bold mb-3">Lessons learned</h2>
+          <Bullets items={a.lessonsLearned} tone="ok" />
+        </Card>
+      )}
+
       <Link href="/architectures" className="inline-flex items-center gap-1.5 text-sm text-accent2 font-medium">
         <Icon name="ArrowLeft" size={15} /> All architectures
       </Link>
