@@ -7,6 +7,22 @@ export const MODULES: Module[] = [
     objectives: ["Define generative vs discriminative AI", "Name the core components of a GenAI app", "Trace a prompt from input to output at a high level"],
     concepts: ["llm", "tokens", "prompt-box", "streaming"],
     keyTakeaways: ["GenAI predicts the next token given context", "A production app is far more than 'call the model'", "Grounding + tools turn a model into a product"],
+    overview: "Generative AI is a subset of machine learning that produces new content — text, images, code, audio — rather than classifying or regressing on existing content. The shift is from prediction to generation: a model learns to produce outputs by optimizing token probability over massive datasets. A production GenAI app is not just an API call; it adds prompt management, retrieval, tools, guardrails, streaming, and observability on top of the raw model — each layer addressing a real failure mode.",
+    commonMistakes: [
+      "Treating the model as the product — the model is one component; the product is the full pipeline around it",
+      "Ignoring latency as a design constraint — streaming is not optional for interactive apps; a 5s wait before any text appears feels broken",
+      "Conflating temperature 0 with determinism — greedy decoding reduces variance but hardware floating-point differences can still cause output variation across runs",
+      "Skipping guardrails 'until later' — input/output filtering is cheapest to add at the start, expensive to retrofit",
+    ],
+    practicalExercises: [
+      "Build a minimal chatbot: system prompt + multi-turn memory + streaming output; measure the UX difference with and without streaming",
+      "Send the same prompt through GPT-4o, Claude 3.5 Sonnet, and Llama 3.1 8B and compare quality, latency, and cost per token",
+    ],
+    interviewQuestions: [
+      "What's the difference between a discriminative and a generative model?",
+      "Why isn't calling an LLM API directly enough to build a production AI app?",
+      "What is a token and why does it matter for cost and context?",
+    ],
   },
   {
     id: 2, slug: "llms", title: "Large Language Models", level: "Beginner",
@@ -14,6 +30,22 @@ export const MODULES: Module[] = [
     objectives: ["Compare OpenAI, Claude, Gemini, and open models", "Explain context windows and hallucination", "Choose a model for a task"],
     concepts: ["llm", "openai", "claude", "gemini", "llama", "context-window", "hallucination"],
     keyTakeaways: ["No single model is best at everything", "Context is a hard budget", "Open weights trade quality for control"],
+    overview: "LLMs are transformer-based models trained on trillions of tokens to predict the next token in a sequence. The major providers — OpenAI (GPT-4o, o-series), Anthropic (Claude), Google (Gemini), and Meta (Llama) — differ in training data, RLHF approach, context window size, multimodal capabilities, and licensing. Choosing a model requires matching task requirements (reasoning depth, speed, cost, context length, modality, data residency) to model capabilities — no single model dominates all dimensions, and the landscape changes every few months.",
+    commonMistakes: [
+      "Defaulting to GPT-4 without benchmarking — smaller, cheaper models (Claude Haiku, Llama 3.1 8B) outperform on many narrow tasks",
+      "Treating hallucination as a bug to be fixed — it's a fundamental property of next-token prediction; mitigate with grounding, don't expect elimination",
+      "Ignoring context window as a design constraint — at 128K tokens the cost and latency are non-trivial; design the context window budget explicitly",
+      "Assuming API models are always superior — open-weights models are better for fine-tuning, data residency, and cost at high scale",
+    ],
+    practicalExercises: [
+      "Run the same multi-step reasoning problem through GPT-4o, Claude 3.5 Sonnet, and Mistral 7B; record accuracy, TTFT, cost per call",
+      "Find a task where a 7B model is 'good enough' vs one where it fails — observe where scale matters",
+    ],
+    interviewQuestions: [
+      "How does context window size affect architecture decisions for a production app?",
+      "When would you choose an open-weights model over a frontier API?",
+      "What is hallucination and what architectural patterns reduce (but don't eliminate) it?",
+    ],
   },
   {
     id: 3, slug: "transformers", title: "Transformers", level: "Intermediate",
@@ -21,6 +53,21 @@ export const MODULES: Module[] = [
     objectives: ["Explain self-attention intuitively", "Describe tokenization + positional encoding", "Understand the quadratic-cost trade-off"],
     concepts: ["transformers", "tokens", "context-window"],
     keyTakeaways: ["Attention lets every token look at every other token", "Parallelism made scaling possible", "Context length is bounded by attention cost"],
+    overview: "The transformer replaced RNNs by introducing self-attention — each token attends to every other token simultaneously, producing a weighted average of their representations. This eliminates the sequential dependency that made RNNs hard to parallelize, enabling training on thousands of GPUs. Positional encodings (sinusoidal or learned RoPE) inject sequence order because attention is permutation-invariant. The fundamental bottleneck is O(n²) attention cost: doubling context quadruples attention computation, which is why 1M-token context windows require architectural techniques like Flash Attention to be practical.",
+    commonMistakes: [
+      "Thinking 'attention' means the model 'focuses on the right thing' — it's a learned weighted average, not a spotlight; the model learns what to weight",
+      "Confusing training parallelism with inference parallelism — training runs attention over the whole sequence in parallel; inference generates one token at a time (autoregressive)",
+      "Assuming larger model = smarter — architecture design, training data quality, and RLHF matter as much as parameter count",
+    ],
+    practicalExercises: [
+      "Run BertViz on a transformer to visualize attention patterns for a sentence with pronouns and their antecedents",
+      "Manually compute attention scores for a 3-token sequence to see the math behind 'Q×K / sqrt(d)'",
+    ],
+    interviewQuestions: [
+      "Why can't you just make the context window infinite?",
+      "What's the difference between encoder-only, decoder-only, and encoder-decoder transformers — and which is an LLM?",
+      "Why did transformers replace RNNs for language modeling?",
+    ],
   },
   {
     id: 4, slug: "prompt-engineering", title: "Prompt Engineering", level: "Beginner",
@@ -28,6 +75,22 @@ export const MODULES: Module[] = [
     objectives: ["Write effective system prompts", "Use templates + versioning", "Control output with sampling params"],
     concepts: ["system-prompt", "prompt-templates", "prompt-versioning", "temperature", "structured-output"],
     keyTakeaways: ["Prompts are versioned artifacts", "Structure beats prose for machine consumers", "Low temperature for facts"],
+    overview: "A system prompt is a versioned, tested artifact — not a string you write once and forget. Effective prompts separate stable persona and rules (cacheable, cost-efficient) from dynamic per-request context (variable). Few-shot examples are the highest-ROI prompt technique: they encode the exact format and reasoning style you want without fine-tuning. Structured output (JSON schema constraints) is essential for any prompt whose output feeds downstream code — prose is fine for human readers, not for parsers.",
+    commonMistakes: [
+      "Not versioning prompts — you can't diff regressions or understand why quality changed after an edit",
+      "Mixing stable persona with dynamic context in one block — breaks prompt caching, doubling cost",
+      "Using high temperature for factual tasks — temperature > 0.2 for factual/structured tasks introduces noise with no benefit",
+      "Writing instructions for human readers — the model doesn't need motivation or politeness; be precise and explicit",
+    ],
+    practicalExercises: [
+      "Write a system prompt for a customer service bot; then deliberately break it with 5 adversarial inputs (angry user, off-topic request, jailbreak attempt)",
+      "Add Anthropic's prompt caching headers to a system prompt and measure token cost reduction over 10 consecutive requests",
+    ],
+    interviewQuestions: [
+      "How do you prevent prompt regressions when iterating on a system prompt?",
+      "What is prompt caching and when does it save money?",
+      "Why are few-shot examples more reliable than instruction-only prompts for complex output formats?",
+    ],
   },
   {
     id: 5, slug: "embeddings", title: "Embeddings", level: "Intermediate",
@@ -35,6 +98,22 @@ export const MODULES: Module[] = [
     objectives: ["Explain what an embedding is", "Pick a similarity metric", "Avoid the mixed-model pitfall"],
     concepts: ["embeddings", "similarity", "tokens"],
     keyTakeaways: ["Same model for index + query", "Cosine vs dot vs Euclidean", "Embeddings power search, RAG, memory"],
+    overview: "Embeddings are dense vector representations of text (or other modalities) learned by training a model to place semantically similar content near each other in a high-dimensional space. The key property: similar meaning → small angular distance (cosine similarity). Embedding models must be consistent — you cannot mix ada-002 embeddings at index time with text-embedding-3-large at query time, because the vector spaces are completely different. Matryoshka Representation Learning (MRL) lets you truncate an embedding to a smaller dimension (e.g., 1536 → 256) with controlled quality loss, trading memory and compute for retrieval speed.",
+    commonMistakes: [
+      "Using different models for indexing vs querying — catastrophic quality drop; the vector spaces are not aligned",
+      "Comparing cosine scores across different models — scores are not comparable; 0.85 with model A ≠ 0.85 with model B",
+      "Embedding full documents — long text averages away the meaning of specific passages; chunk first, then embed",
+      "Not normalizing for dot-product similarity — dot product equals cosine only for unit-norm vectors",
+    ],
+    practicalExercises: [
+      "Embed 100 documents with ada-002 and text-embedding-3-large; compare nearest-neighbor results for 10 queries — find cases where they disagree",
+      "Visualize a 2D UMAP projection of a document corpus and observe clustering by topic",
+    ],
+    interviewQuestions: [
+      "Why does cosine similarity outperform Euclidean distance for most NLP tasks?",
+      "What is Matryoshka Representation Learning and when would you use it?",
+      "What happens if you change the embedding model after indexing half your documents?",
+    ],
   },
   {
     id: 6, slug: "vector-databases", title: "Vector Databases", level: "Intermediate",
@@ -42,6 +121,22 @@ export const MODULES: Module[] = [
     objectives: ["Explain ANN vs brute force", "Compare Pinecone/Qdrant/Weaviate/FAISS", "Design for tenant isolation"],
     concepts: ["vector-database", "pinecone", "qdrant", "weaviate", "faiss", "chroma"],
     keyTakeaways: ["ANN trades exactness for speed", "Metadata filtering is a security control", "Managed vs self-hosted trade-offs"],
+    overview: "Vector databases store high-dimensional embeddings and find approximate nearest neighbors (ANN) using graph-based (HNSW) or inverted-file (IVF) indexes. 'Approximate' is intentional — exact nearest-neighbor search in 1536 dimensions is O(n) brute force, which takes seconds at 10M vectors. HNSW achieves sub-millisecond search over 100M vectors by building a multi-layer navigable graph. Metadata filtering — running a predicate alongside ANN — is where most production systems spend their architectural complexity: pre-filter (filter first, search the subset) behaves very differently from post-filter (search globally, filter the results) at scale.",
+    commonMistakes: [
+      "Treating ANN as exact search — HNSW has a recall rate (typically 95–99%); 1–5% of the best matches are missed",
+      "Ignoring metadata filter performance — pre-filter degrades with high-cardinality filters; post-filter biases toward documents with many chunks",
+      "Choosing a vector DB based on GitHub stars instead of filter capability — for ACL-filtered enterprise use, metadata support is critical",
+      "No tenant isolation strategy — shared indexes can leak embeddings across tenants via ANN neighbors",
+    ],
+    practicalExercises: [
+      "Build an HNSW index with FAISS on 50k Wikipedia vectors; measure recall@10 vs exact brute-force search",
+      "Add a metadata filter and observe how pre-filter vs post-filter behavior changes at different selectivity levels",
+    ],
+    interviewQuestions: [
+      "What is the difference between pre-filtering and post-filtering in vector search, and when does each fail?",
+      "Why is HNSW preferred over IVF for most production workloads?",
+      "How do you implement tenant isolation in a shared vector database?",
+    ],
   },
   {
     id: 7, slug: "retrieval", title: "Retrieval", level: "Intermediate",
@@ -49,6 +144,22 @@ export const MODULES: Module[] = [
     objectives: ["Compare BM25 vs vector search", "Explain hybrid fusion (RRF)", "Justify re-ranking"],
     concepts: ["retrieval", "bm25", "vector-search", "hybrid-search", "metadata-filter", "reranking", "cross-encoder"],
     keyTakeaways: ["Neither lexical nor semantic wins alone", "Over-retrieve then re-rank", "Re-ranking gives precision"],
+    overview: "Retrieval is the highest-leverage component in a RAG system — answer quality is capped by retrieval recall. BM25 (keyword/lexical) and dense vectors (semantic) fail in complementary cases: BM25 misses paraphrases and synonyms; vectors miss exact product codes, version numbers, and acronyms. Hybrid search with Reciprocal Rank Fusion (RRF) merges both ranked lists without needing score normalization. The two-stage pipeline — over-retrieve with hybrid (top-30), then re-rank with a cross-encoder (top-10) — is the production standard because cross-encoders are too slow for full-corpus scoring but accurate for a small candidate set.",
+    commonMistakes: [
+      "Using only vector search — exact-match queries for SKUs, error codes, or version numbers will miss without keyword search",
+      "Skipping re-ranking — first-stage ranking (both BM25 and vector) is noisy; cross-encoder re-ranking reliably improves P@1",
+      "Evaluating retrieval with generation metrics — a correct answer on wrong chunks is luck; measure MRR@K and Recall@K separately",
+      "Not tuning the hybrid fusion weights — naive 50/50 blend is a starting point, not the optimum for your corpus",
+    ],
+    practicalExercises: [
+      "Build a hybrid retriever on a 10k-document corpus; find 5 queries where BM25 beats vectors and 5 where vectors win",
+      "Measure MRR@10 with first-stage only vs with a cross-encoder re-ranker; quantify the precision gain",
+    ],
+    interviewQuestions: [
+      "How does Reciprocal Rank Fusion work and why doesn't it require score normalization?",
+      "What metric measures retrieval quality and how is it different from generation quality metrics?",
+      "When would you use a bi-encoder vs a cross-encoder, and why not always use the cross-encoder?",
+    ],
   },
   {
     id: 8, slug: "rag", title: "RAG", level: "Intermediate",
@@ -56,6 +167,22 @@ export const MODULES: Module[] = [
     objectives: ["Explain the RAG read + write paths", "Chunk documents well", "Diagnose where RAG fails"],
     concepts: ["rag", "chunking", "document-parsing", "context-builder", "prompt-assembly", "grounding", "faithfulness"],
     keyTakeaways: ["Retrieval quality is the ceiling on answer quality", "Cite sources", "Evaluate retrieval separately"],
+    overview: "RAG (Retrieval-Augmented Generation) grounds LLM outputs in retrieved facts, dramatically reducing hallucination on knowledge-intensive tasks. The system has two paths: a write path (ingest documents → parse → chunk → embed → store) and a read path (query → retrieve → assemble context → generate with citations). The most common failure modes are: (1) retrieval failure — wrong chunks selected; (2) context assembly failure — right chunks, wrong order (lost-in-the-middle); (3) faithfulness failure — model generates beyond retrieved context. Each failure requires a different diagnostic and fix.",
+    commonMistakes: [
+      "Fixed-size chunking regardless of content type — code needs function-boundary chunking; legal text needs clause boundaries; generic 512-token splits break both",
+      "Not propagating source metadata to chunks — you can't generate citations if you don't know where each chunk came from",
+      "Placing retrieved chunks in the middle of the context — LLMs attend most strongly to the beginning and end; critical facts belong there",
+      "Treating the generation model as responsible for facts the retriever didn't return — if retrieval misses it, the model can't ground on it",
+    ],
+    practicalExercises: [
+      "Build a complete RAG pipeline over a technical doc set; inject a false fact into one document and test whether the model repeats it",
+      "Swap chunking strategy (fixed-size vs semantic boundary) and measure the impact on retrieval recall",
+    ],
+    interviewQuestions: [
+      "What are the three main failure modes of RAG and how do you diagnose which one is occurring?",
+      "How would you evaluate whether a chunking change improved retrieval quality?",
+      "What is the 'lost in the middle' problem and how do you mitigate it?",
+    ],
   },
   {
     id: 9, slug: "agentic-ai", title: "Agentic AI", level: "Advanced",
@@ -63,6 +190,22 @@ export const MODULES: Module[] = [
     objectives: ["Explain the reason-act-observe loop", "Compare agent vs workflow", "Bound agents safely"],
     concepts: ["agents", "agent-reasoning", "planner", "executor", "critic", "reflection", "multi-agent"],
     keyTakeaways: ["Agents = LLM + tools + loop", "Always bound iterations", "Use workflows when the path is known"],
+    overview: "An agent is an LLM in a loop: it reasons about a goal, selects a tool, observes the result, updates its plan, and repeats until the task is complete or a bound is hit. The ReAct pattern (Reason → Act → Observe, repeated) is the dominant loop structure. The key discipline is knowing when NOT to use an agent: if the execution path is known and deterministic, a workflow (hardcoded graph) is cheaper, more reliable, and auditable. Agents are appropriate when the path is unknown and must be discovered — web research, debugging unknown code, multi-step planning with branching conditions.",
+    commonMistakes: [
+      "No iteration limit — without a max_steps bound, an agent on a failing tool will loop indefinitely, consuming budget",
+      "No tool error handling — a 404 or timeout silently corrupts the agent's world model if treated as success",
+      "Building agents when workflows would work — if you can draw the execution graph in advance, use a workflow; agents add latency, cost, and unpredictability",
+      "Trusting agent output without human review — for actions with real-world consequences (email, payment, code deploy), require a confirmation step",
+    ],
+    practicalExercises: [
+      "Build a ReAct agent that can web-search and run Python code to answer factual questions; test it on a multi-step problem",
+      "Deliberately cause a tool to fail mid-task and observe whether the agent recovers or spirals; add error handling and re-test",
+    ],
+    interviewQuestions: [
+      "When would you use a deterministic workflow instead of an agent?",
+      "How do you prevent an agent from looping indefinitely?",
+      "What is the ReAct pattern and why is 'observe' the critical step?",
+    ],
   },
   {
     id: 10, slug: "mcp", title: "MCP (Model Context Protocol)", level: "Advanced",
@@ -70,6 +213,22 @@ export const MODULES: Module[] = [
     objectives: ["Explain MCP's client/server model", "Describe core primitives (tools/resources/prompts)", "Secure an MCP server"],
     concepts: ["mcp", "mcp-server", "tool-registry", "function-calling"],
     keyTakeaways: ["MCP replaces N×M integrations", "It's JSON-RPC under the hood", "Least-privilege is critical"],
+    overview: "MCP (Model Context Protocol) is a JSON-RPC 2.0 standard that decouples AI tools from AI apps — any compliant app can connect to any MCP server without custom integration code. Each server exposes three primitives: tools (callable functions with schemas), resources (context the model can read), and prompts (reusable templates). The integration problem it solves: without MCP, N AI apps × M tools = N×M custom integrations; with MCP, each side implements once and connects to the other through the standard. Security is critical: MCP servers run with real system credentials and the model can be prompt-injected into calling them with unintended arguments.",
+    commonMistakes: [
+      "Exposing MCP servers over the network without authentication — an unauthenticated server gives anyone the model's tool access",
+      "Granting MCP servers excessive permissions — a file-reading tool doesn't need write access to the entire filesystem",
+      "Not validating tool arguments before execution — the model's JSON is structurally valid but semantically untrusted (path traversal, SQL injection)",
+      "Forgetting that retrieved content can prompt-inject the model into calling unintended tools",
+    ],
+    practicalExercises: [
+      "Build an MCP server exposing search, fetch, and compute tools; connect it to Claude Desktop; inspect the manifest and observe how Claude selects tools",
+      "Attempt a prompt injection via a web page the server fetches; add input sanitization and verify it blocks the injection",
+    ],
+    interviewQuestions: [
+      "What is the difference between an MCP tool, an MCP resource, and an MCP prompt?",
+      "How does MCP's N+M model differ from the N×M integration problem?",
+      "What security controls are required on an MCP server that has filesystem access?",
+    ],
   },
   {
     id: 11, slug: "memory", title: "Memory", level: "Intermediate",
@@ -77,6 +236,22 @@ export const MODULES: Module[] = [
     objectives: ["Distinguish memory types", "Summarize to fit context", "Recall long-term facts via embeddings"],
     concepts: ["conversation-memory", "short-term-memory", "long-term-memory", "semantic-memory", "redis"],
     keyTakeaways: ["Context window = working memory", "Summarize old turns", "Store facts, not transcripts"],
+    overview: "Memory in AI systems operates at three time scales: in-context (current conversation, microsecond access, evicted on session end), external short-term (Redis with TTL, millisecond access, cross-session), and external long-term (vector store, semantic retrieval, seconds, permanent). The critical mistake is truncation — cutting old turns discards information and creates coherence gaps. Progressive summarization is better: compress the oldest turns into a summary that preserves key facts while reducing token count. For long-term memory, store extracted facts and preferences, not raw transcripts; semantic search on 'user prefers concise answers' is useful; semantic search on the conversation where they said it is noisy.",
+    commonMistakes: [
+      "Truncating old turns instead of summarizing — the model loses information mid-conversation with no graceful degradation",
+      "Storing full transcripts in a vector store — retrieval becomes noisy; the model gets entire conversations back when it needs one fact",
+      "No TTL or session expiry strategy — Redis fills up indefinitely; conversations from 18 months ago are rarely relevant",
+      "Conflating working memory (context window) with persistent memory (external store) — they serve different retrieval latency and durability requirements",
+    ],
+    practicalExercises: [
+      "Build a chatbot with Redis-backed cross-session memory; test what happens when the conversation exceeds the context window without summarization",
+      "Implement progressive summarization (compress oldest N turns) and compare coherence in a 50-turn conversation vs truncation",
+    ],
+    interviewQuestions: [
+      "How do you handle a conversation that's longer than the model's context window?",
+      "What is the difference between episodic and semantic memory in AI systems?",
+      "When would you use Redis vs a vector database for conversation memory?",
+    ],
   },
   {
     id: 12, slug: "tools", title: "Tools", level: "Intermediate",
@@ -84,6 +259,22 @@ export const MODULES: Module[] = [
     objectives: ["Design good tool schemas", "Sandbox tool execution", "Return concise tool results"],
     concepts: ["tool-calling", "tool-registry", "database", "external-apis"],
     keyTakeaways: ["Small, well-described tools", "Validate args", "Least-privilege credentials"],
+    overview: "Tools extend an LLM from text generation to real-world action: querying databases, calling APIs, running code, reading files, writing to systems. Each tool is defined by a JSON Schema describing its name, description, and parameters — the model uses the description (not just the name) to decide when and how to call it. Tool design quality directly determines agent reliability: an ambiguous tool description causes wrong selection; overlapping tool capabilities cause indecision; too many tools (>20) degrade selection accuracy. The principles: one thing per tool, precise descriptions that distinguish between similar tools, enums over open strings wherever possible.",
+    commonMistakes: [
+      "Tools that do too many things — a 'database' tool with 5 modes forces the model to guess which mode; separate tools are more reliable",
+      "Vague descriptions that don't distinguish similar tools — 'search' vs 'lookup' vs 'fetch' need precise descriptions of when each applies",
+      "No argument validation before execution — model JSON is structurally valid (matches the schema) but semantically untrusted",
+      "Excessive credentials on tool-calling agents — a read-only query tool doesn't need database write access",
+    ],
+    practicalExercises: [
+      "Design three overlapping tools (web search, document lookup, URL fetch) with intentionally ambiguous descriptions; test model selection; refine descriptions until selection is reliable",
+      "Add a SQL injection test case to a database tool call and verify the argument validator blocks it",
+    ],
+    interviewQuestions: [
+      "How do you prevent prompt injection through tool results injected back into the context?",
+      "What is the practical upper limit on the number of tools you should give a model, and why?",
+      "Why are enum parameters more reliable than open string parameters in tool schemas?",
+    ],
   },
   {
     id: 13, slug: "function-calling", title: "Function Calling", level: "Intermediate",
@@ -91,6 +282,22 @@ export const MODULES: Module[] = [
     objectives: ["Explain the function-calling loop", "Contrast with MCP", "Ensure reliable tool selection"],
     concepts: ["function-calling", "structured-output", "tool-calling"],
     keyTakeaways: ["Model emits name + JSON args", "Validate before executing", "Too many tools hurts accuracy"],
+    overview: "Function calling is the mechanism by which a model emits a structured JSON blob — a function name and arguments — instead of prose, and your application code executes the function and returns the result. The model does not actually call anything; it proposes a call. Your dispatch layer validates the arguments against the schema and decides whether to execute — this separation is what makes function calling safe. The loop: user prompt → model emits tool_call → application validates + executes → result injected as tool message → model continues generating. The model can emit multiple tool calls in one turn; parallel execution of independent tool calls is a standard optimization.",
+    commonMistakes: [
+      "Not validating the model's arguments before execution — the JSON schema is declared to the model but not enforced by it; the model can pass invalid values",
+      "Giving the model too many tools — tool selection accuracy measurably degrades past 20-30 tools; use a tool registry with dynamic injection",
+      "Trusting tool results as safe to inject back without sanitization — a tool that returns user-controlled content can prompt-inject the model",
+      "Single tool call per turn assumption — models can and should emit parallel tool calls for independent operations",
+    ],
+    practicalExercises: [
+      "Implement the full function-calling loop from scratch with the Anthropic SDK; handle parallel tool calls in a single turn",
+      "Deliberately pass invalid arguments to a tool (wrong type, out-of-range value) and verify the validator catches it before execution",
+    ],
+    interviewQuestions: [
+      "What is the difference between function calling and RAG — when would you use each?",
+      "How do you handle a model that calls a function with arguments that pass JSON schema validation but are semantically invalid?",
+      "What happens when the model emits two tool calls in one response — are they sequential or can they be parallel?",
+    ],
   },
   {
     id: 14, slug: "streaming", title: "Streaming", level: "Beginner",
@@ -98,6 +305,22 @@ export const MODULES: Module[] = [
     objectives: ["Explain SSE vs WebSocket streaming", "Handle mid-stream errors + cancellation", "Render partial markdown"],
     concepts: ["streaming", "streaming-ui"],
     keyTakeaways: ["TTFT drives perceived speed", "Support abort", "Handle tool-call events in the stream"],
+    overview: "Streaming delivers tokens to the user as they're generated rather than waiting for the complete response. The user perceives the app as responsive if TTFT (Time to First Token) is under 500ms — even if total generation takes 8 seconds, seeing text appear immediately feels fast. Server-Sent Events (SSE) is the standard protocol: a persistent HTTP/1.1 connection where the server pushes `data:` events. WebSockets add bidirectional messaging but SSE is simpler, stateless, and sufficient for LLM streaming. The challenge: streaming markdown requires a parser that handles partial syntax (`**bold` mid-response) without breaking the UI.",
+    commonMistakes: [
+      "Buffering the full response before sending — the point of streaming is to reduce TTFT; server-side buffering defeats it entirely",
+      "Missing `X-Accel-Buffering: no` header — nginx and other reverse proxies buffer SSE by default; this single header is often the fix for 'streaming isn't working'",
+      "No abort/cancellation support — users who navigate away mid-generation keep consuming GPU budget; implement AbortController client-side and cancel the API call",
+      "Not handling tool_call events in the stream — tool use emits structured events mid-stream that must be parsed differently from content tokens",
+    ],
+    practicalExercises: [
+      "Build a FastAPI SSE endpoint with a streaming LLM call; measure TTFT with and without nginx buffering disabled",
+      "Implement client-side cancellation and verify on the server that the LLM API call is cancelled when the user navigates away",
+    ],
+    interviewQuestions: [
+      "What is TTFT and why does it matter more than total generation time for perceived performance?",
+      "What is the difference between SSE and WebSocket for LLM streaming — when would you use WebSocket?",
+      "How do you render markdown incrementally without the UI breaking on partial syntax?",
+    ],
   },
   {
     id: 15, slug: "inference", title: "Inference", level: "Advanced",
@@ -105,6 +328,22 @@ export const MODULES: Module[] = [
     objectives: ["Explain temperature/top-p/top-k", "Use structured output safely", "Know when to use reasoning models"],
     concepts: ["tokens", "temperature", "structured-output", "reasoning-models", "context-window"],
     keyTakeaways: ["Sampling controls randomness", "Schemas make LLMs API-safe", "Reasoning models trade latency for depth"],
+    overview: "Inference is the process of generating tokens from a model. Temperature scales the logit distribution before sampling: temperature 0 (greedy) always picks the highest-probability token; temperature 1 samples from the raw distribution; temperature > 1 flattens it toward uniform. Nucleus sampling (top-p) restricts sampling to the smallest set of tokens whose cumulative probability exceeds p, avoiding long-tail nonsense tokens. Structured output uses constrained decoding — a grammar or JSON schema is compiled into a token mask that prevents the model from emitting tokens that would make the output invalid. This is not post-processing; it constrains generation in real time. Reasoning models (o1, R1) extend generation with internal chain-of-thought before the final response, trading 5-30x latency for large accuracy gains on complex reasoning tasks.",
+    commonMistakes: [
+      "Using temperature > 0 for structured output — constrained decoding already restricts token choices; temperature adds noise on top of constraints",
+      "Using reasoning models for simple tasks — o1 is 20-50x more expensive and slower than GPT-4o; it's appropriate for hard math, complex code, multi-step planning",
+      "Assuming temperature 0 is deterministic — greedy decoding minimizes variance but floating-point arithmetic differences across hardware can cause divergence",
+      "Post-processing JSON output instead of using constrained decoding — JSON.parse() on LLM output fails on large-scale production; constrained decoding gives 100% valid output",
+    ],
+    practicalExercises: [
+      "Generate the same creative prompt 20 times at temperature 0 and temperature 1.0; quantify the variance; find the sweet spot for your use case",
+      "Use Outlines or Instructor to implement constrained JSON decoding; compare parse failure rate against asking the model to 'output valid JSON'",
+    ],
+    interviewQuestions: [
+      "What is nucleus sampling and why is it preferred over top-k?",
+      "How does constrained decoding differ from asking the model to output JSON in the system prompt?",
+      "When would you use a reasoning model (o1) over a standard model (GPT-4o)?",
+    ],
   },
   {
     id: 16, slug: "evaluation", title: "Evaluation", level: "Advanced",
@@ -112,6 +351,22 @@ export const MODULES: Module[] = [
     objectives: ["Build a golden test set", "Eval retrieval + generation separately", "Use LLM-as-judge responsibly"],
     concepts: ["evaluation", "faithfulness", "hallucination"],
     keyTakeaways: ["Vibes don't scale", "Separate retrieval + generation metrics", "Evals unlock safe iteration"],
+    overview: "Evaluation is the discipline that makes safe iteration possible — without evals, you can't tell if a prompt change improved or degraded quality. The three-layer eval stack: (1) unit evals — deterministic assertions on specific inputs (does the output contain 'Paris'?); (2) LLM-as-judge — a model rates outputs against a rubric (faithfulness, relevance, coherence scored 1-5); (3) human evals — ground truth, expensive, sampled. Retrieval and generation must be measured separately: retrieval metrics (MRR@K, Recall@K) tell you if the right chunks were found; generation metrics (faithfulness, answer relevance) tell you if the model used them correctly. A system with good generation but poor retrieval gives correct-sounding wrong answers.",
+    commonMistakes: [
+      "Evaluating only happy-path inputs — adversarial cases, out-of-scope questions, and edge cases are where production systems fail",
+      "Using the same model family as generator and LLM judge — the judge tends to agree with the generator; use a different provider for the judge",
+      "Not separating retrieval from generation metrics — attributing generation failures to the model when retrieval was the actual cause",
+      "Manual-only evaluation — quality drifts silently after model updates, prompt changes, or document corpus changes without a continuous eval pipeline",
+    ],
+    practicalExercises: [
+      "Build a RAGAS evaluation pipeline over a RAG system; run it before and after a prompt change to detect regressions",
+      "Add a deliberately failing test to your golden set and gate CI on it; observe whether the pipeline catches a retrieval regression",
+    ],
+    interviewQuestions: [
+      "What is the difference between faithfulness and answer relevance in RAG evaluation?",
+      "How do you use LLM-as-judge without the judge being biased toward verbose or confident-sounding answers?",
+      "Why should retrieval metrics and generation metrics be measured separately?",
+    ],
   },
   {
     id: 17, slug: "production-architecture", title: "Production Architecture", level: "Advanced",
@@ -119,6 +374,22 @@ export const MODULES: Module[] = [
     objectives: ["Draw the production request path", "Add failover + fallbacks", "Budget latency + cost per stage"],
     concepts: ["api-gateway", "model-router", "prompt-assembly", "caching", "streaming"],
     keyTakeaways: ["Design for failure at every hop", "Cache aggressively", "Route to the cheapest capable model"],
+    overview: "A production GenAI system is a distributed pipeline, not a function call. The request path: client → CDN/edge → API gateway (auth, rate limit) → model router → prompt assembler (token budgeting, cache header injection) → retriever → LLM → response streamer → observability collector. Every hop adds latency, and the interactive latency budget is tight (P95 < 2s end-to-end for synchronous apps). The critical design discipline is failure isolation: the vector DB is slow, the model provider is rate-limited, a tool call 404s — each of these must have a defined fallback, not a 500 error propagated to the user.",
+    commonMistakes: [
+      "No fallback model provider — a single-provider outage takes down the product; model router should have at least one fallback",
+      "Missing prompt caching — repeated system prompts (most interactive apps have one) are the easiest cost reduction: 90% token cost savings on the stable prefix",
+      "Designing for happy path only — every stage needs a defined behavior when it fails; 'retry and hope' is not a fallback",
+      "No per-stage latency budget — retrieval consuming 800ms unnoticed is common; instrument every hop",
+    ],
+    practicalExercises: [
+      "Draw the full request path for a RAG chatbot with tools; assign a latency budget to each stage summing to 1.5s",
+      "Deliberately throttle the vector DB to simulate 2s latency and verify the fallback (cached results or degraded mode) activates",
+    ],
+    interviewQuestions: [
+      "How do you handle a model provider outage with zero downtime?",
+      "What is prompt caching and which requests benefit most from it?",
+      "How do you allocate a 2-second latency budget across gateway, retrieval, assembly, and generation stages?",
+    ],
   },
   {
     id: 18, slug: "security", title: "Security", level: "Advanced",
@@ -126,6 +397,22 @@ export const MODULES: Module[] = [
     objectives: ["Defend against prompt injection", "Redact PII everywhere", "Layer independent safety checks"],
     concepts: ["guardrails", "prompt-injection", "jailbreak", "pii"],
     keyTakeaways: ["Treat all external content as untrusted", "Filter input AND output", "Least-privilege tools"],
+    overview: "GenAI security differs from traditional software security because the attack surface is linguistic. Prompt injection — embedding instructions in user input or retrieved content that override system instructions — is the #1 GenAI-specific threat. Direct injection comes from the user; indirect injection comes from external content the model retrieves (web pages, documents, tool results). Defense is layered: (1) input sanitization; (2) privilege separation (tools have least-privilege); (3) output filtering; (4) treating all external content as untrusted data, never instructions. PII must be redacted at input (before the model sees it), at output (before it's returned), and at logging time (before it hits your observability stack).",
+    commonMistakes: [
+      "Trusting retrieved content — an attacker can plant instructions in a web page or document that gets retrieved and injected into the prompt",
+      "Input-only filtering — a jailbroken model can exfiltrate data through the output; filter both directions",
+      "Granting tool-calling agents excessive permissions — a code-execution tool with network access can exfiltrate data",
+      "Logging PII in traces — one compliance incident from unredacted PII in your observability stack undoes months of product work",
+    ],
+    practicalExercises: [
+      "Attempt 5 different prompt injection attacks on your own chatbot (direct user injection, indirect via retrieved content, jailbreak); document which succeed",
+      "Run a PII scan (with Presidio or similar) over your observability traces; identify and fix the logging paths that capture raw prompts",
+    ],
+    interviewQuestions: [
+      "What is indirect prompt injection and how does it differ from direct prompt injection?",
+      "How do you prevent an LLM agent from being manipulated through its tool results?",
+      "At what points in the pipeline should PII be redacted, and why each point?",
+    ],
   },
   {
     id: 19, slug: "observability", title: "Observability", level: "Advanced",
@@ -133,6 +420,22 @@ export const MODULES: Module[] = [
     objectives: ["Trace a request end-to-end", "Log tokens + cost per span", "Correlate output to prompt version"],
     concepts: ["observability", "tracing", "evaluation", "middleware"],
     keyTakeaways: ["You can't fix what you can't see", "One trace ID end-to-end", "Sample + store for evals"],
+    overview: "Observability for AI systems extends traditional observability with AI-specific concerns: token counts, cost per request, model name, prompt version, and the full prompt/response payload for debugging and offline evaluation. OpenTelemetry's GenAI semantic conventions standardize span attributes (gen_ai.usage.input_tokens, gen_ai.request.model, etc.). Every request must carry a trace ID from the client through to the model call — this is what lets you correlate a user complaint to a specific prompt version and model response. LangSmith, Langfuse, and Arize add evaluation integration on top of raw tracing: you can sample production traces and run your eval suite on them.",
+    commonMistakes: [
+      "Not propagating trace IDs across service boundaries — traces break at the RAG retriever or tool call, making end-to-end debugging impossible",
+      "Logging full prompts and responses without PII scrubbing — the observability store becomes a compliance liability",
+      "Sampling too aggressively — rare failure modes (jailbreaks, retrieval misses on adversarial queries) are invisible if you sample only 1%",
+      "Not correlating traces to prompt versions — after a prompt change you can't tell whether quality improved or regressed without version tags on spans",
+    ],
+    practicalExercises: [
+      "Instrument a RAG pipeline end-to-end with OpenTelemetry; add cost-per-request and prompt-version attributes to every span",
+      "Use LangSmith to compare two prompt versions on the same 50 production queries; measure quality delta",
+    ],
+    interviewQuestions: [
+      "What AI-specific attributes should you add to an OpenTelemetry span beyond the standard tracing attributes?",
+      "How do you calculate cost-per-request from observability data, and what does it tell you about architecture decisions?",
+      "How do you use production traces as an input to your evaluation pipeline?",
+    ],
   },
   {
     id: 20, slug: "scaling", title: "Scaling", level: "Expert",
@@ -140,6 +443,22 @@ export const MODULES: Module[] = [
     objectives: ["Serve models with continuous batching", "Autoscale on the right signals", "Cache to cut cost + latency"],
     concepts: ["load-balancer", "gpu", "inference-server", "caching", "autoscaling"],
     keyTakeaways: ["Batch to utilize GPUs", "Scale on queue depth, not CPU%", "Semantic caching saves real money"],
+    overview: "Scaling LLM inference is dominated by GPU memory bandwidth, not compute. The bottleneck is loading the KV cache (attention keys and values for the current context) from GPU HBM on each token generation step — memory bandwidth, not FLOPs, is the binding constraint. Continuous batching packs multiple requests into one forward pass and dynamically swaps requests in/out as they complete, achieving 5-10x better GPU utilization than naive sequential serving. vLLM and TensorRT-LLM implement this. Autoscaling must trigger on GPU memory utilization or request queue depth, not CPU% — CPUs are nearly idle during inference; scaling on CPU% will never trigger.",
+    commonMistakes: [
+      "Autoscaling on CPU% — CPUs do tokenization and output formatting; the GPU is the bottleneck and is invisible to CPU metrics",
+      "Not using continuous batching — naive one-request-at-a-time serving wastes 60-80% of GPU capacity",
+      "Semantic caching only at the application layer — prompt caching (KV cache reuse at the inference server) is more efficient for repeated system prompts",
+      "Over-provisioning for peak rather than using queue depth + batching to smooth spikes — LLM inference can absorb burst via batching without proportional GPU scaling",
+    ],
+    practicalExercises: [
+      "Deploy vLLM with continuous batching; measure GPU utilization with 1 vs 10 vs 50 concurrent requests; observe the batching efficiency gain",
+      "Implement semantic caching with Redis (embedding the query, retrieving cached responses for similar queries); measure cache hit rate on a realistic query distribution",
+    ],
+    interviewQuestions: [
+      "What is continuous batching and how does it improve GPU utilization over naive sequential serving?",
+      "Why does context length affect inference cost disproportionately, and what does this mean for pricing?",
+      "What metrics should trigger LLM inference autoscaling, and why is CPU% the wrong signal?",
+    ],
   },
 ];
 

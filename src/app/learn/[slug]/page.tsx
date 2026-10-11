@@ -63,6 +63,34 @@ export default async function ModulePage({ params }: { params: Promise<{ slug: s
         </div>
       </Card>
 
+      {m.overview && (
+        <Card>
+          <h2 className="text-base font-bold mb-3 flex items-center gap-2"><Icon name="BookOpen" size={17} className="text-accent" /> Overview</h2>
+          <p className="text-sm text-muted leading-relaxed">{m.overview}</p>
+        </Card>
+      )}
+
+      {m.commonMistakes && m.commonMistakes.length > 0 && (
+        <Card>
+          <h2 className="text-base font-bold mb-3 flex items-center gap-2"><Icon name="AlertTriangle" size={17} className="text-danger" /> Common Mistakes</h2>
+          <Bullets items={m.commonMistakes} tone="danger" />
+        </Card>
+      )}
+
+      {m.practicalExercises && m.practicalExercises.length > 0 && (
+        <Card>
+          <h2 className="text-base font-bold mb-3 flex items-center gap-2"><Icon name="Wrench" size={17} className="text-accent2" /> Practical Exercises</h2>
+          <Bullets items={m.practicalExercises} tone="ok" />
+        </Card>
+      )}
+
+      {m.interviewQuestions && m.interviewQuestions.length > 0 && (
+        <Card>
+          <h2 className="text-base font-bold mb-3 flex items-center gap-2"><Icon name="MessageSquare" size={17} className="text-accent3" /> Interview Questions</h2>
+          <Bullets items={m.interviewQuestions} />
+        </Card>
+      )}
+
       <div className="flex items-center justify-between gap-3">
         {prev ? (
           <Link href={`/learn/${prev.slug}`} className="glass rounded-xl px-4 py-3 text-sm hover:bg-white/10 transition flex items-center gap-2">

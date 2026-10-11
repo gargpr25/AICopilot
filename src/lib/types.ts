@@ -76,6 +76,10 @@ export interface Module {
   objectives: string[];
   concepts: string[]; // component slugs
   keyTakeaways: string[];
+  overview?: string;
+  commonMistakes?: string[];
+  practicalExercises?: string[];
+  interviewQuestions?: string[];
 }
 
 export interface FlowNodeDef {
